@@ -6,6 +6,9 @@
     <title>Map Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-simple-map-screenshoter"></script>
+	<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+	<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
     <style>
         * {
             margin: 0;
@@ -33,7 +36,7 @@
 		}
 
 		.header-logo {
-			height: 4rem;        /* Adjust as needed */
+			height: 4rem;
 			width: auto;
 		}
 
@@ -230,7 +233,15 @@
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
 			subdomains: 'abcd', 
 			maxZoom: 20}).addTo(map); 
-
+		
+		L.control.fullscreen({
+			position: 'topright',  // or 'topright'
+			title: 'View Fullscreen',
+			titleCancel: 'Exit Fullscreen'
+			}).addTo(map);
+		
+		L.simpleMapScreenshoter().addTo(map)
+		
         // Add markers
         const markers = {};
         locations.forEach(loc => {
