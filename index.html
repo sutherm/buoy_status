@@ -25,14 +25,35 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
+		.header-content {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 1rem;
+		}
+
+		.header-logo {
+			height: 4rem;        /* Adjust as needed */
+			width: auto;
+		}
+
+		.header-text h1,
+		.header-text p {
+			text-align: center;
+		}
+		
+		
+		
         .header h1 {
 			color: #f5f5f5;
+			text-align: center;
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
         }
         
         .header p {
             color: #f5f5f5;
+			text-align: center;
 			opacity: 0.9;
             font-size: 0.85rem;
         }
@@ -88,6 +109,16 @@
             top: 0;
         }
         
+		th.asc::after {
+			content: " ▲";
+			font-size: 0.75rem;
+		}
+		
+		th.desc::after {
+			content: " ▼";
+			font-size: 0.75rem;
+		}
+		
         td {
             padding: 0.75rem;
             border-bottom: 1px solid #e9ecef;
@@ -116,6 +147,7 @@
         
         .stat-value {
 			color: #f5f5f5;
+			text-align: center;
             font-size: 2.5rem;
             font-weight: bold;
             margin-bottom: 0.3rem;
@@ -123,6 +155,7 @@
         
         .stat-label {
             color: #f5f5f5;
+			text-align: center;
 			opacity: 0.9;
             font-size: 0.9rem;
         }
@@ -135,10 +168,20 @@
     </style>
 </head>
 <body>
-    <div class="header">
+	<div class="header">
+		<div class="header-content">
+			<img src="https://glos.org/wp-content/uploads/2022/12/Logo_Color_Mark-Only.png" alt="GLOS Logo" class="header-logo">
+			<div class="header-text">
+				<h1>GLOS Buoy Status</h1>
+				<p>Updated weekly; Status as of 11-11-2025</p>
+			</div>
+		</div>
+	</div>
+	
+    <!-- <div class="header">
         <h1>GLOS Buoy Status</h1>
-        <p>Status as of mm-dd-2025</p>
-    </div>
+        <p>Updated weekly; Status as of mm-dd-2025</p>
+    </div> -->
     
     <div class="container">
         <div class="panel">
@@ -154,8 +197,7 @@
                         <tr>
                             <th>Buoy ID</th>
                             <th>Name</th>
-                            <th>Value</th>
-                            <th>Status</th>
+							<th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -165,7 +207,7 @@
         </div>
         
         <div class="panel" style="grid-column: 1 / -1;">
-            <div class="panel-header">Summary Statistics</div>
+            <!-- <div class="panel-header">Summary Statistics</div> -->
             <div class="stats" id="statsContainer">
             </div>
         </div>
@@ -174,11 +216,11 @@
     <script>
         // Sample data - replace with your own
         const locations = [
-            { name: "45013", lat: 43.09800, lng: -87.84960, value: 1, status: "Active" },
-            { name: "45014", lat: 44.80000,	lng: -87.76000, value: 1, status: "Active" },
-            { name: "45022", lat: 45.40300,	lng: -85.08800, value: 1, status: "Inactive" },
-            { name: "45023", lat: 47.26993, lng: -88.60705, value: 1, status: "Active" },
-            { name: "45024", lat: 43.97665,	lng: -86.55945, value: 1, status: "Inactive" }
+            { buoy: "45013", lat: 43.09800, lng: -87.84960, name: "Atwater",  status: "Active"  },
+            { buoy: "45014", lat: 44.80000,	lng: -87.76000, name: "Green Bay", status: "Active" },
+            { buoy: "45022", lat: 45.40300,	lng: -85.08800, name: "Little Traverse Bay", status: "Inactive" },
+            { buoy: "45023", lat: 47.26993, lng: -88.60705, name: "North Entry Buoy, North Keweenaw Peninsula", status: "Active" },
+            { buoy: "45024", lat: 43.97665,	lng: -86.55945, name: "Ludington", status: "Inactive" }
         ];
 
         // Initialize map
@@ -186,16 +228,16 @@
 		
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-			subdomains: 'abcd',
-			maxZoom: 20}).addTo(map);
+			subdomains: 'abcd', 
+			maxZoom: 20}).addTo(map); 
 
         // Add markers
         const markers = {};
         locations.forEach(loc => {
             const marker = L.marker([loc.lat, loc.lng])
                 .addTo(map)
-                .bindPopup(`<b>${loc.name}</b><br>Status: ${loc.status.toLocaleString()}`);
-            markers[loc.name] = marker;
+                .bindPopup(`<b>${loc.buoy}</b><br>Status: ${loc.status.toLocaleString()}`);
+            markers[loc.buoy] = marker;
         });
 
         // Populate table
@@ -203,13 +245,12 @@
         locations.forEach(loc => {
             const row = document.createElement('tr');
             row.innerHTML = `
+                <td>${loc.buoy}</td>
                 <td>${loc.name}</td>
-                <td>${loc.type}</td>
-                <td>${loc.value.toLocaleString()}</td>
                 <td>${loc.status}</td>
             `;
             row.addEventListener('click', () => {
-                markers[loc.name].openPopup();
+                markers[loc.buoy].openPopup();
                 map.setView([loc.lat, loc.lng], 10);
             });
             tableBody.appendChild(row);
@@ -223,9 +264,9 @@
         const statsContainer = document.getElementById('statsContainer');
         const stats = [
             { label: 'Total Buoys', value: locations.length },
-            { label: 'Active Buoys', value: activeCount },
-        <!-- { label: 'Total Value', value: totalValue.toLocaleString() }, -->
-            { label: 'Buoy Status Changes', value: Math.round(avgValue).toLocaleString() }
+            { label: 'Active Buoys', value: activeCount }
+			<!-- { label: 'Total Value', value: totalValue.toLocaleString() }, -->
+            <!-- { label: 'Buoy Status Changes', value: Math.round(avgValue).toLocaleString() } -->
         ];
 
         stats.forEach(stat => {
@@ -238,5 +279,47 @@
             statsContainer.appendChild(card);
         });
     </script>
+	<script>
+    // Enable column sorting
+    document.querySelectorAll("#dataTable th").forEach((header, columnIndex) => {
+        header.style.cursor = "pointer";
+        header.addEventListener("click", () => {
+            const table = header.closest("table");
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            
+            const isAscending = header.classList.toggle("asc"); // toggle class each click
+            header.classList.toggle("desc", !isAscending);
+
+            // Remove sorting classes from other headers
+            table.querySelectorAll("th").forEach(th => {
+                if (th !== header) th.classList.remove("asc", "desc");
+            });
+
+            // Sort rows
+            const sortedRows = rows.sort((a, b) => {
+                const aText = a.children[columnIndex].textContent.trim();
+                const bText = b.children[columnIndex].textContent.trim();
+
+                // Check if numeric sort makes sense
+                const aNum = parseFloat(aText.replace(/[^0-9.-]+/g,""));
+                const bNum = parseFloat(bText.replace(/[^0-9.-]+/g,""));
+                const bothNumeric = !isNaN(aNum) && !isNaN(bNum);
+
+                if (bothNumeric) {
+                    return isAscending ? aNum - bNum : bNum - aNum;
+                } else {
+                    return isAscending
+                        ? aText.localeCompare(bText)
+                        : bText.localeCompare(aText);
+                }
+            });
+
+            // Rebuild table
+            tbody.innerHTML = "";
+            sortedRows.forEach(row => tbody.appendChild(row));
+        });
+    });
+	</script>
 </body>
 </html>
