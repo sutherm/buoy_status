@@ -162,7 +162,56 @@
 			opacity: 0.9;
             font-size: 0.9rem;
         }
-        
+        		
+		.legend {
+			background: white;
+			border-radius: 8px;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+			font-size: 0.75rem;
+			color: #333;
+			overflow: hidden;
+			transition: all 0.3s ease;
+			width: 150px;
+		}
+
+		.legend-header {
+			background: #3d529b;
+			color: white;
+			padding: 6px 8px;
+			cursor: pointer;
+			user-select: none;
+			font-size: 0.75rem;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.legend-body {
+			padding: 6px 8px;
+		}
+
+		.legend div {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin-bottom: 4px;
+		}
+
+		.legend-circle {
+			width: 14px;
+			height: 14px;
+			border-radius: 50%;
+			border: 1px solid #ccc;
+		}
+
+		.legend.collapsed .legend-body {
+			display: none;
+		}
+		
+		.legend-header:hover {
+			background: #4898b9;
+		}
+		
         @media (max-width: 968px) {
             .container {
                 grid-template-columns: 1fr;
@@ -243,14 +292,32 @@
 		L.simpleMapScreenshoter().addTo(map)
 		
         // Add markers
-        const markers = {};
-        locations.forEach(loc => {
-            const marker = L.marker([loc.lat, loc.lng])
-                .addTo(map)
-                .bindPopup(`<b>${loc.buoy}</b><br>Status: ${loc.status.toLocaleString()}`);
-            markers[loc.buoy] = marker;
-        });
+        const markers = {}; 
+        <!-- locations.forEach(loc => { -->
+        <!--    const marker = L.marker([loc.lat, loc.lng]) -->
+        <!--        .addTo(map) -->
+        <!--        .bindPopup(`<b>${loc.buoy}</b><br>Status: ${loc.status.toLocaleString()}`); -->
+        <!--    markers[loc.buoy] = marker; -->
+        <!-- }); -->
+		
+		locations.forEach(loc => {
+			const color = loc.status === "Active" ? "#3d529b" : "#434b4d" //"#999999";  // blue vs gray
+    
+			const marker = L.circleMarker([loc.lat, loc.lng], {
+				radius: 6,
+				color: "#ffffff",     // border color
+				weight: 1,
+				fillColor: color,
+				fillOpacity: 0.9
+			})
+			.addTo(map)
+			.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
 
+			markers[loc.buoy] = marker;
+		});
+		
+		
+		
         // Populate table
         const tableBody = document.getElementById('tableBody');
         locations.forEach(loc => {
@@ -289,6 +356,36 @@
             `;
             statsContainer.appendChild(card);
         });
+		
+		const legend = L.control({ position: "bottomleft" });
+		legend.onAdd = function (map) {
+			const div = L.DomUtil.create("div", "info legend collapsed");
+			div.innerHTML = `
+				<div class="legend-header">
+					<strong>Legend ▸</strong>
+				</div>
+				<div class="legend-body">
+					<div><span class="legend-circle" style="background:#3d529b"></span> Active</div>
+					<div><span class="legend-circle" style="background:#434b4d"></span> Inactive</div>
+				</div>
+			`;
+
+			// Toggle open/close on click
+			div.querySelector(".legend-header").addEventListener("click", () => {
+				div.classList.toggle("collapsed");
+				const header = div.querySelector(".legend-header strong");
+				header.textContent = div.classList.contains("collapsed")
+					? "Legend ▸"
+					: "Legend ▾";
+			});
+
+			// Prevent clicks from affecting the map (important)
+			L.DomEvent.disableClickPropagation(div);
+
+			return div;
+		};
+
+		legend.addTo(map);
     </script>
 	<script>
     // Enable column sorting
