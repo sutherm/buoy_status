@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Dashboard</title>
+    <title>GLOS Buoy Status</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-simple-map-screenshoter"></script>
@@ -86,13 +86,13 @@
         }
         
         #map {
-            height: 600px;
+            height: 550px;
             width: 100%;
         }
         
         .table-container {
             padding: 1.5rem;
-            max-height: 500px;
+            max-height: 550px;
             overflow-y: auto;
         }
         
@@ -293,31 +293,26 @@
 		
         // Add markers
         const markers = {}; 
-        <!-- locations.forEach(loc => { -->
-        <!--    const marker = L.marker([loc.lat, loc.lng]) -->
-        <!--        .addTo(map) -->
-        <!--        .bindPopup(`<b>${loc.buoy}</b><br>Status: ${loc.status.toLocaleString()}`); -->
-        <!--    markers[loc.buoy] = marker; -->
-        <!-- }); -->
-		
 		locations.forEach(loc => {
-			const color = loc.status === "Active" ? "#3d529b" : "#434b4d" //"#999999";  // blue vs gray
+			const isActive = loc.status === "Active";
+			// const color = loc.status === "Active" ? "#3d529b" : "#434b4d" //"#999999";  // blue vs gray
+			const color = isActive ? "#3d529b" : "#434b4d";
+			const radius = isActive ? 7 : 5;   // 👈 change sizes here
     
 			const marker = L.circleMarker([loc.lat, loc.lng], {
-				radius: 6,
+				radius: radius,
 				color: "#ffffff",     // border color
 				weight: 1,
 				fillColor: color,
 				fillOpacity: 0.9
 			})
+			
 			.addTo(map)
 			.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
 
 			markers[loc.buoy] = marker;
 		});
-		
-		
-		
+			
         // Populate table
         const tableBody = document.getElementById('tableBody');
         locations.forEach(loc => {
