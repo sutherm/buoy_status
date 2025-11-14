@@ -346,6 +346,11 @@
 	                <td>${loc.name}</td>
 	                <td>${loc.status}</td>
 	            `;
+				// Add subtle color tint matching map marker
+    			const isActive = loc.status.toLowerCase() === "active";
+    			row.style.backgroundColor = isActive
+        			? "rgba(35,225,0,0.05)"     // light green tint
+        			: "rgba(67,75,77,0.05)";    // light gray tint
 	            row.addEventListener('click', () => {
 	                markers[loc.buoy].openPopup();
 	                map.setView([loc.lat, loc.lng], 10);
