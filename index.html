@@ -167,11 +167,11 @@
 			background: white;
 			border-radius: 8px;
 			box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-			font-size: 0.75rem;
+			font-size: 0.7rem;
 			color: #333;
 			overflow: hidden;
 			transition: all 0.3s ease;
-			width: 150px;
+			width: 100px;
 		}
 
 		.legend-header {
@@ -180,21 +180,20 @@
 			padding: 6px 8px;
 			cursor: pointer;
 			user-select: none;
-			font-size: 0.75rem;
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
+			font-size: 0.7rem;
 		}
 
 		.legend-body {
-			padding: 6px 8px;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			padding: 10px;
 		}
 
-		.legend div {
+		.legend-item {
 			display: flex;
 			align-items: center;
-			gap: 8px;
-			margin-bottom: 4px;
+			gap: 6px;
 		}
 
 		.legend-circle {
@@ -204,10 +203,19 @@
 			border: 1px solid #ccc;
 		}
 
+		.legend label {
+			flex-grow: 1;
+			cursor: pointer;
+		}
+
+		.legend input[type="checkbox"] {
+			cursor: pointer;
+		}
+
 		.legend.collapsed .legend-body {
 			display: none;
 		}
-		
+
 		.legend-header:hover {
 			background: #4898b9;
 		}
@@ -284,7 +292,7 @@
 			maxZoom: 20}).addTo(map); 
 		
 		L.control.fullscreen({
-			position: 'topright',  // or 'topright'
+			position: 'topright',
 			title: 'View Fullscreen',
 			titleCancel: 'Exit Fullscreen'
 			}).addTo(map);
@@ -292,25 +300,28 @@
 		L.simpleMapScreenshoter().addTo(map)
 		
         // Add markers
-        const markers = {}; 
+		const markers = {};
+		const activeGroup = L.layerGroup().addTo(map);
+		const inactiveGroup = L.layerGroup().addTo(map);
+
 		locations.forEach(loc => {
 			const isActive = loc.status === "Active";
-			// const color = loc.status === "Active" ? "#3d529b" : "#434b4d" //"#999999";  // blue vs gray
-			const color = isActive ? "#3d529b" : "#434b4d";
-			const radius = isActive ? 7 : 5;   // 👈 change sizes here
-    
+			const color = isActive ? "#3d529b" : "#999999";
+			const radius = isActive ? 7 : 5;
+
 			const marker = L.circleMarker([loc.lat, loc.lng], {
 				radius: radius,
-				color: "#ffffff",     // border color
+				color: "#ffffff",
 				weight: 1,
 				fillColor: color,
 				fillOpacity: 0.9
 			})
-			
-			.addTo(map)
-			.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
+		
+		.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
 
-			markers[loc.buoy] = marker;
+		(isActive ? activeGroup : inactiveGroup).addLayer(marker);
+
+		markers[loc.buoy] = marker;
 		});
 			
         // Populate table
@@ -352,31 +363,54 @@
             statsContainer.appendChild(card);
         });
 		
+		// Legend code
 		const legend = L.control({ position: "bottomleft" });
+
 		legend.onAdd = function (map) {
-			const div = L.DomUtil.create("div", "info legend collapsed");
+			const div = L.DomUtil.create("div", "info legend");
+    
+			// Auto-collapse on mobile
+			if (window.innerWidth < 768) {
+				div.classList.add("collapsed");
+			}
+
 			div.innerHTML = `
 				<div class="legend-header">
 					<strong>Legend ▸</strong>
 				</div>
 				<div class="legend-body">
-					<div><span class="legend-circle" style="background:#3d529b"></span> Active</div>
-					<div><span class="legend-circle" style="background:#434b4d"></span> Inactive</div>
+					<div class="legend-item">
+						<input type="checkbox" id="toggle-active" checked>
+						<span class="legend-circle" style="background:#3d529b"></span>
+						<label for="toggle-active">Active</label>
+					</div>
+						<div class="legend-item">
+						<input type="checkbox" id="toggle-inactive" checked>
+						<span class="legend-circle" style="background:#999999"></span>
+					<label for="toggle-inactive">Inactive</label>
+					</div>
 				</div>
-			`;
+		`	;
 
-			// Toggle open/close on click
-			div.querySelector(".legend-header").addEventListener("click", () => {
+			// Toggle open/close legend
+			const header = div.querySelector(".legend-header");
+			header.addEventListener("click", () => {
 				div.classList.toggle("collapsed");
-				const header = div.querySelector(".legend-header strong");
-				header.textContent = div.classList.contains("collapsed")
-					? "Legend ▸"
-					: "Legend ▾";
+				const text = div.classList.contains("collapsed") ? "Legend ▸" : "Legend ▾";
+				header.querySelector("strong").textContent = text;
 			});
 
-			// Prevent clicks from affecting the map (important)
-			L.DomEvent.disableClickPropagation(div);
+			// Toggle layers on checkbox click
+			div.querySelector("#toggle-active").addEventListener("change", e => {
+				if (e.target.checked) map.addLayer(activeGroup);
+				else map.removeLayer(activeGroup);
+			});
+			div.querySelector("#toggle-inactive").addEventListener("change", e => {
+				if (e.target.checked) map.addLayer(inactiveGroup);
+				else map.removeLayer(inactiveGroup);
+			});
 
+			L.DomEvent.disableClickPropagation(div);
 			return div;
 		};
 
