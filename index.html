@@ -290,142 +290,144 @@
   			});
 
 		// Initialize map
-        const map = L.map('map').setView([45, -84.5], 6);
-		
-		L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-			subdomains: 'abcd', 
-			maxZoom: 20}).addTo(map); 
-		
-		L.control.fullscreen({
-			position: 'topright',
-			title: 'View Fullscreen',
-			titleCancel: 'Exit Fullscreen'
-			}).addTo(map);
-		
-		L.simpleMapScreenshoter().addTo(map)
-		
-        // Add markers
-		const markers = {};
-		const activeGroup = L.layerGroup().addTo(map);
-		const inactiveGroup = L.layerGroup().addTo(map);
-
-		locations.forEach(loc => {
-			const isActive = loc.status === "Active";
-			const color = isActive ? "#23e100" : "#434b4d";
-			const radius = isActive ? 6 : 3.5;
-
-			const marker = L.circleMarker([loc.lat, loc.lng], {
-				radius: radius,
-				color: "#ffffff",
-				weight: 1,
-				fillColor: color,
-				fillOpacity: 0.9
-			})
-		
-		.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
-
-		(isActive ? activeGroup : inactiveGroup).addLayer(marker);
-
-		markers[loc.buoy] = marker;
-		});
+        function initMapData() {
+			const map = L.map('map').setView([45, -84.5], 6);
 			
-        // Populate table
-        const tableBody = document.getElementById('tableBody');
-        locations.forEach(loc => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${loc.buoy}</td>
-                <td>${loc.name}</td>
-                <td>${loc.status}</td>
-            `;
-            row.addEventListener('click', () => {
-                markers[loc.buoy].openPopup();
-                map.setView([loc.lat, loc.lng], 10);
-            });
-            tableBody.appendChild(row);
-        });
-
-        // Calculate and display stats
-        const totalValue = locations.reduce((sum, loc) => sum + loc.value, 0);
-        const avgValue = totalValue / locations.length;
-        const activeCount = locations.filter(loc => loc.status === 'Active').length;
-
-        const statsContainer = document.getElementById('statsContainer');
-        const stats = [
-            { label: 'Total Buoys', value: locations.length },
-            { label: 'Active Buoys', value: activeCount }
-			<!-- { label: 'Total Value', value: totalValue.toLocaleString() }, -->
-            <!-- { label: 'Buoy Status Changes', value: Math.round(avgValue).toLocaleString() } -->
-        ];
-
-        stats.forEach(stat => {
-            const card = document.createElement('div');
-            card.className = 'stat-card';
-            card.innerHTML = `
-                <div class="stat-value">${stat.value}</div>
-                <div class="stat-label">${stat.label}</div>
-            `;
-            statsContainer.appendChild(card);
-        });
-		
-		// Legend code
-		const legend = L.control({ position: "bottomleft" });
-		legend.onAdd = function (map) {
-			const div = L.DomUtil.create("div", "info legend");
-
-			// Start collapsed on mobile
-			if (window.innerWidth < 768) {
-				div.classList.add("collapsed");
-			}
-
-			div.innerHTML = `
-				<div class="legend-header">
-					<strong>Legend ▸</strong>
-				</div>
-
-				<div class="legend-body">
-					<div class="legend-item legend-active" data-layer="active">
-						<span class="legend-circle" style="background:#23e100;"></span>
-						<span>Active</span>
-					</div>
-
-					<div class="legend-item legend-inactive" data-layer="inactive">
-						<span class="legend-circle" style="background:#434b4d;"></span>
-						<span>Inactive</span>
-					</div>
-				</div>
-			`;
-
-			// Toggle collapse
-			const header = div.querySelector(".legend-header");
-			header.addEventListener("click", () => {
-				div.classList.toggle("collapsed");
-				header.querySelector("strong").textContent =
-				  div.classList.contains("collapsed") ? "Legend ▸" : "Legend ▾";
+			L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+				subdomains: 'abcd', 
+				maxZoom: 20}).addTo(map); 
+			
+			L.control.fullscreen({
+				position: 'topright',
+				title: 'View Fullscreen',
+				titleCancel: 'Exit Fullscreen'
+				}).addTo(map);
+			
+			L.simpleMapScreenshoter().addTo(map)
+			
+	        // Add markers
+			const markers = {};
+			const activeGroup = L.layerGroup().addTo(map);
+			const inactiveGroup = L.layerGroup().addTo(map);
+	
+			locations.forEach(loc => {
+				const isActive = loc.status === "Active";
+				const color = isActive ? "#23e100" : "#434b4d";
+				const radius = isActive ? 6 : 3.5;
+	
+				const marker = L.circleMarker([loc.lat, loc.lng], {
+					radius: radius,
+					color: "#ffffff",
+					weight: 1,
+					fillColor: color,
+					fillOpacity: 0.9
+				})
+			
+			.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
+	
+			(isActive ? activeGroup : inactiveGroup).addLayer(marker);
+	
+			markers[loc.buoy] = marker;
 			});
-
-			// Toggle active/inactive layer visibility
-			div.querySelectorAll(".legend-item").forEach(item => {
-				item.addEventListener("click", () => {
-					const type = item.dataset.layer;
-					const group = type === "active" ? activeGroup : inactiveGroup;
-
-					if (map.hasLayer(group)) {
-						map.removeLayer(group);
-						item.classList.add("off");
-					} else {
-						map.addLayer(group);
-						item.classList.remove("off");
-					}
+				
+	        // Populate table
+	        const tableBody = document.getElementById('tableBody');
+	        locations.forEach(loc => {
+	            const row = document.createElement('tr');
+	            row.innerHTML = `
+	                <td>${loc.buoy}</td>
+	                <td>${loc.name}</td>
+	                <td>${loc.status}</td>
+	            `;
+	            row.addEventListener('click', () => {
+	                markers[loc.buoy].openPopup();
+	                map.setView([loc.lat, loc.lng], 10);
+	            });
+	            tableBody.appendChild(row);
+	        });
+	
+	        // Calculate and display stats
+	        const totalValue = locations.reduce((sum, loc) => sum + loc.value, 0);
+	        const avgValue = totalValue / locations.length;
+	        const activeCount = locations.filter(loc => loc.status === 'Active').length;
+	
+	        const statsContainer = document.getElementById('statsContainer');
+	        const stats = [
+	            { label: 'Total Buoys', value: locations.length },
+	            { label: 'Active Buoys', value: activeCount }
+				<!-- { label: 'Total Value', value: totalValue.toLocaleString() }, -->
+	            <!-- { label: 'Buoy Status Changes', value: Math.round(avgValue).toLocaleString() } -->
+	        ];
+	
+	        stats.forEach(stat => {
+	            const card = document.createElement('div');
+	            card.className = 'stat-card';
+	            card.innerHTML = `
+	                <div class="stat-value">${stat.value}</div>
+	                <div class="stat-label">${stat.label}</div>
+	            `;
+	            statsContainer.appendChild(card);
+	        });
+			
+			// Legend code
+			const legend = L.control({ position: "bottomleft" });
+			legend.onAdd = function (map) {
+				const div = L.DomUtil.create("div", "info legend");
+	
+				// Start collapsed on mobile
+				if (window.innerWidth < 768) {
+					div.classList.add("collapsed");
+				}
+	
+				div.innerHTML = `
+					<div class="legend-header">
+						<strong>Legend ▸</strong>
+					</div>
+	
+					<div class="legend-body">
+						<div class="legend-item legend-active" data-layer="active">
+							<span class="legend-circle" style="background:#23e100;"></span>
+							<span>Active</span>
+						</div>
+	
+						<div class="legend-item legend-inactive" data-layer="inactive">
+							<span class="legend-circle" style="background:#434b4d;"></span>
+							<span>Inactive</span>
+						</div>
+					</div>
+				`;
+	
+				// Toggle collapse
+				const header = div.querySelector(".legend-header");
+				header.addEventListener("click", () => {
+					div.classList.toggle("collapsed");
+					header.querySelector("strong").textContent =
+					  div.classList.contains("collapsed") ? "Legend ▸" : "Legend ▾";
 				});
-			});
-
-			L.DomEvent.disableClickPropagation(div);
-			return div;
-		};
-
-		legend.addTo(map);
+	
+				// Toggle active/inactive layer visibility
+				div.querySelectorAll(".legend-item").forEach(item => {
+					item.addEventListener("click", () => {
+						const type = item.dataset.layer;
+						const group = type === "active" ? activeGroup : inactiveGroup;
+	
+						if (map.hasLayer(group)) {
+							map.removeLayer(group);
+							item.classList.add("off");
+						} else {
+							map.addLayer(group);
+							item.classList.remove("off");
+						}
+					});
+				});
+	
+				L.DomEvent.disableClickPropagation(div);
+				return div;
+			};
+	
+			legend.addTo(map);
+		}
     </script>
 	<script>
     // Enable column sorting
