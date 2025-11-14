@@ -277,15 +277,19 @@
 
     <script>
         // Sample data - replace with your own
-        const locations = [
-            { buoy: "45013", lat: 43.09800, lng: -87.84960, name: "Atwater",  status: "Active"  },
-            { buoy: "45014", lat: 44.80000,	lng: -87.76000, name: "Green Bay", status: "Active" },
-            { buoy: "45022", lat: 45.40300,	lng: -85.08800, name: "Little Traverse Bay", status: "Inactive" },
-            { buoy: "45023", lat: 47.26993, lng: -88.60705, name: "North Entry Buoy, North Keweenaw Peninsula", status: "Active" },
-            { buoy: "45024", lat: 43.97665,	lng: -86.55945, name: "Ludington", status: "Inactive" }
-        ];
+		let locations = [];
 
-        // Initialize map
+		fetch("data/buoys.json")
+  			.then(response => response.json())
+  			.then(data => {
+      			locations = data;
+      			initMapData(); // <-- call a function to build markers/table/etc.
+  			})
+  			.catch(err => {
+      			console.error("Failed to load JSON:", err);
+  			});
+
+		// Initialize map
         const map = L.map('map').setView([45, -84.5], 6);
 		
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
