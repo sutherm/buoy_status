@@ -312,7 +312,7 @@
 			const inactiveGroup = L.layerGroup().addTo(map);
 	
 			locations.forEach(loc => {
-				const isActive = loc.status === "active";
+				const isActive = loc.status.toLowerCase() === "active";
 				const color = isActive ? "#23e100" : "#434b4d";
 				const radius = isActive ? 6 : 3.5;
 	
