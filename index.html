@@ -304,6 +304,12 @@
 				}).addTo(map);
 			
 			L.simpleMapScreenshoter().addTo(map)
+
+			map.createPane("inactivePane");
+			map.getPane("inactivePane").style.zIndex = 400;
+
+			map.createPane("activePane");
+			map.getPane("activePane").style.zIndex = 500;
 			
 	        // Add markers
 			const markers = {};
@@ -316,6 +322,7 @@
 				const radius = isActive ? 6 : 3.5;
 	
 				const marker = L.circleMarker([loc.lat, loc.lng], {
+					pane: isActive ? "activePane" : "inactivePane",
 					radius: radius,
 					color: "#ffffff",
 					weight: 1,
@@ -451,17 +458,9 @@
                 const bText = b.children[columnIndex].textContent.trim();
 
                 // Check if numeric sort makes sense
-                const aNum = parseFloat(aText.replace(/[^0-9.-]+/g,""));
-                const bNum = parseFloat(bText.replace(/[^0-9.-]+/g,""));
-                const bothNumeric = !isNaN(aNum) && !isNaN(bNum);
-
-                if (bothNumeric) {
-                    return isAscending ? aNum - bNum : bNum - aNum;
-                } else {
-                    return isAscending
-                        ? aText.localeCompare(bText)
-                        : bText.localeCompare(aText);
-                }
+                return isAscending
+    				? aText.localeCompare(bText, undefined, { numeric: true })
+    				: bText.localeCompare(aText, undefined, { numeric: true });
             });
 
             // Rebuild table
