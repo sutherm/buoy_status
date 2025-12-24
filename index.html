@@ -45,8 +45,6 @@
 			text-align: center;
 		}
 		
-		
-		
         .header h1 {
 			color: #f5f5f5;
 			text-align: center;
@@ -91,7 +89,7 @@
         }
         
         .table-container {
-            padding: 1.5rem;
+            padding: 0;
             max-height: 550px;
             overflow-y: auto;
         }
@@ -102,16 +100,17 @@
         }
         
         th {
-            background: #f8f9fa;
+            background: #103045;
+			color: #f8f9fa;
             padding: 0.75rem;
             text-align: left;
             font-weight: 600;
-            color: #495057;
             border-bottom: 2px solid #dee2e6;
             position: sticky;
             top: 0;
+			z-index: 2;
         }
-        
+		
 		th.asc::after {
 			content: " ▲";
 			font-size: 0.75rem;
@@ -127,12 +126,12 @@
             border-bottom: 1px solid #e9ecef;
         }
         
-        tr:hover {
+		tbody tr:hover {
             background: #FB8500;
             cursor: pointer;
 			opacity: 0.5
-        }
-        
+		}
+		
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -252,7 +251,7 @@
         </div>
         
         <div class="panel">
-            <div class="panel-header">GLOS Supported Buoys</div>
+            <!-- <div class="panel-header">GLOS-Supported Buoys</div> -->
             <div class="table-container">
                 <table id="dataTable">
                     <thead>
@@ -277,151 +276,169 @@
 
     <script>
         // Sample data - replace with your own
-        const locations = [
-            { buoy: "45013", lat: 43.09800, lng: -87.84960, name: "Atwater",  status: "Active"  },
-            { buoy: "45014", lat: 44.80000,	lng: -87.76000, name: "Green Bay", status: "Active" },
-            { buoy: "45022", lat: 45.40300,	lng: -85.08800, name: "Little Traverse Bay", status: "Inactive" },
-            { buoy: "45023", lat: 47.26993, lng: -88.60705, name: "North Entry Buoy, North Keweenaw Peninsula", status: "Active" },
-            { buoy: "45024", lat: 43.97665,	lng: -86.55945, name: "Ludington", status: "Inactive" }
-        ];
+		let locations = [];
 
-        // Initialize map
-        const map = L.map('map').setView([45, -84.5], 6);
-		
-		L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-			subdomains: 'abcd', 
-			maxZoom: 20}).addTo(map); 
-		
-		L.control.fullscreen({
-			position: 'topright',
-			title: 'View Fullscreen',
-			titleCancel: 'Exit Fullscreen'
-			}).addTo(map);
-		
-		L.simpleMapScreenshoter().addTo(map)
-		
-        // Add markers
-		const markers = {};
-		const activeGroup = L.layerGroup().addTo(map);
-		const inactiveGroup = L.layerGroup().addTo(map);
+		fetch("data/buoys.json")
+  			.then(response => response.json())
+  			.then(data => {
+      			locations = data;
+      			initMapData(); // <-- call a function to build markers/table/etc.
+  			})
+  			.catch(err => {
+      			console.error("Failed to load JSON:", err);
+  			});
 
-		locations.forEach(loc => {
-			const isActive = loc.status === "Active";
-			const color = isActive ? "#23e100" : "#434b4d";
-			const radius = isActive ? 6 : 3.5;
-
-			const marker = L.circleMarker([loc.lat, loc.lng], {
-				radius: radius,
-				color: "#ffffff",
-				weight: 1,
-				fillColor: color,
-				fillOpacity: 0.9
-			})
-		
-		.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
-
-		(isActive ? activeGroup : inactiveGroup).addLayer(marker);
-
-		markers[loc.buoy] = marker;
-		});
+		// Initialize map
+        function initMapData() {
+			const map = L.map('map').setView([45, -84.5], 6);
 			
-        // Populate table
-        const tableBody = document.getElementById('tableBody');
-        locations.forEach(loc => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${loc.buoy}</td>
-                <td>${loc.name}</td>
-                <td>${loc.status}</td>
-            `;
-            row.addEventListener('click', () => {
-                markers[loc.buoy].openPopup();
-                map.setView([loc.lat, loc.lng], 10);
-            });
-            tableBody.appendChild(row);
-        });
+			L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+				subdomains: 'abcd', 
+				maxZoom: 20}).addTo(map); 
+			
+			L.control.fullscreen({
+				position: 'topright',
+				title: 'View Fullscreen',
+				titleCancel: 'Exit Fullscreen'
+				}).addTo(map);
+			
+			L.simpleMapScreenshoter().addTo(map)
 
-        // Calculate and display stats
-        const totalValue = locations.reduce((sum, loc) => sum + loc.value, 0);
-        const avgValue = totalValue / locations.length;
-        const activeCount = locations.filter(loc => loc.status === 'Active').length;
+			map.createPane("inactivePane");
+			map.getPane("inactivePane").style.zIndex = 400;
 
-        const statsContainer = document.getElementById('statsContainer');
-        const stats = [
-            { label: 'Total Buoys', value: locations.length },
-            { label: 'Active Buoys', value: activeCount }
-			<!-- { label: 'Total Value', value: totalValue.toLocaleString() }, -->
-            <!-- { label: 'Buoy Status Changes', value: Math.round(avgValue).toLocaleString() } -->
-        ];
-
-        stats.forEach(stat => {
-            const card = document.createElement('div');
-            card.className = 'stat-card';
-            card.innerHTML = `
-                <div class="stat-value">${stat.value}</div>
-                <div class="stat-label">${stat.label}</div>
-            `;
-            statsContainer.appendChild(card);
-        });
-		
-		// Legend code
-		const legend = L.control({ position: "bottomleft" });
-		legend.onAdd = function (map) {
-			const div = L.DomUtil.create("div", "info legend");
-
-			// Start collapsed on mobile
-			if (window.innerWidth < 768) {
-				div.classList.add("collapsed");
-			}
-
-			div.innerHTML = `
-				<div class="legend-header">
-					<strong>Legend ▸</strong>
-				</div>
-
-				<div class="legend-body">
-					<div class="legend-item legend-active" data-layer="active">
-						<span class="legend-circle" style="background:#23e100;"></span>
-						<span>Active</span>
-					</div>
-
-					<div class="legend-item legend-inactive" data-layer="inactive">
-						<span class="legend-circle" style="background:#434b4d;"></span>
-						<span>Inactive</span>
-					</div>
-				</div>
-			`;
-
-			// Toggle collapse
-			const header = div.querySelector(".legend-header");
-			header.addEventListener("click", () => {
-				div.classList.toggle("collapsed");
-				header.querySelector("strong").textContent =
-				  div.classList.contains("collapsed") ? "Legend ▸" : "Legend ▾";
+			map.createPane("activePane");
+			map.getPane("activePane").style.zIndex = 500;
+			
+	        // Add markers
+			const markers = {};
+			const activeGroup = L.layerGroup().addTo(map);
+			const inactiveGroup = L.layerGroup().addTo(map);
+	
+			locations.forEach(loc => {
+				const isActive = loc.status.toLowerCase() === "active";
+				const color = isActive ? "#23e100" : "#434b4d";
+				const radius = isActive ? 6 : 3.5;
+	
+				const marker = L.circleMarker([loc.lat, loc.lng], {
+					pane: isActive ? "activePane" : "inactivePane",
+					radius: radius,
+					color: "#ffffff",
+					weight: 1,
+					fillColor: color,
+					fillOpacity: 0.9
+				})
+			
+			.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
+	
+			(isActive ? activeGroup : inactiveGroup).addLayer(marker);
+	
+			markers[loc.buoy] = marker;
 			});
-
-			// Toggle active/inactive layer visibility
-			div.querySelectorAll(".legend-item").forEach(item => {
-				item.addEventListener("click", () => {
-					const type = item.dataset.layer;
-					const group = type === "active" ? activeGroup : inactiveGroup;
-
-					if (map.hasLayer(group)) {
-						map.removeLayer(group);
-						item.classList.add("off");
-					} else {
-						map.addLayer(group);
-						item.classList.remove("off");
-					}
+				
+	        // Populate table
+	        const tableBody = document.getElementById('tableBody');
+	        locations.forEach(loc => {
+	            const row = document.createElement('tr');
+	            row.innerHTML = `
+	                <td>${loc.buoy}</td>
+	                <td>${loc.name}</td>
+	                <td>${loc.status}</td>
+	            `;
+				// Add subtle color tint matching map marker
+    			const isActive = loc.status.toLowerCase() === "active";
+    			row.style.backgroundColor = isActive
+        			? "rgba(35,225,0,0.05)"     // light green tint
+        			: "rgba(67,75,77,0.05)";    // light gray tint
+	            row.addEventListener('click', () => {
+	                markers[loc.buoy].openPopup();
+	                map.setView([loc.lat, loc.lng], 10);
+	            });
+	            tableBody.appendChild(row);
+	        });
+	
+	        // Calculate and display stats
+	        const totalValue = locations.reduce((sum, loc) => sum + loc.value, 0);
+	        const avgValue = totalValue / locations.length;
+	        const activeCount = locations.filter(loc => loc.status === 'active').length;
+	
+	        const statsContainer = document.getElementById('statsContainer');
+	        const stats = [
+	            { label: 'Total Buoys', value: locations.length },
+	            { label: 'Active Buoys', value: activeCount }
+				<!-- { label: 'Total Value', value: totalValue.toLocaleString() }, -->
+	            <!-- { label: 'Buoy Status Changes', value: Math.round(avgValue).toLocaleString() } -->
+	        ];
+	
+	        stats.forEach(stat => {
+	            const card = document.createElement('div');
+	            card.className = 'stat-card';
+	            card.innerHTML = `
+	                <div class="stat-value">${stat.value}</div>
+	                <div class="stat-label">${stat.label}</div>
+	            `;
+	            statsContainer.appendChild(card);
+	        });
+			
+			// Legend code
+			const legend = L.control({ position: "bottomleft" });
+			legend.onAdd = function (map) {
+				const div = L.DomUtil.create("div", "info legend");
+	
+				// Start collapsed on mobile
+				if (window.innerWidth < 768) {
+					div.classList.add("collapsed");
+				}
+	
+				div.innerHTML = `
+					<div class="legend-header">
+						<strong>Legend ▸</strong>
+					</div>
+	
+					<div class="legend-body">
+						<div class="legend-item legend-active" data-layer="active">
+							<span class="legend-circle" style="background:#23e100;"></span>
+							<span>Active</span>
+						</div>
+	
+						<div class="legend-item legend-inactive" data-layer="inactive">
+							<span class="legend-circle" style="background:#434b4d;"></span>
+							<span>Inactive</span>
+						</div>
+					</div>
+				`;
+	
+				// Toggle collapse
+				const header = div.querySelector(".legend-header");
+				header.addEventListener("click", () => {
+					div.classList.toggle("collapsed");
+					header.querySelector("strong").textContent =
+					  div.classList.contains("collapsed") ? "Legend ▸" : "Legend ▾";
 				});
-			});
-
-			L.DomEvent.disableClickPropagation(div);
-			return div;
-		};
-
-		legend.addTo(map);
+	
+				// Toggle active/inactive layer visibility
+				div.querySelectorAll(".legend-item").forEach(item => {
+					item.addEventListener("click", () => {
+						const type = item.dataset.layer;
+						const group = type === "active" ? activeGroup : inactiveGroup;
+	
+						if (map.hasLayer(group)) {
+							map.removeLayer(group);
+							item.classList.add("off");
+						} else {
+							map.addLayer(group);
+							item.classList.remove("off");
+						}
+					});
+				});
+	
+				L.DomEvent.disableClickPropagation(div);
+				return div;
+			};
+	
+			legend.addTo(map);
+		}
     </script>
 	<script>
     // Enable column sorting
@@ -446,17 +463,9 @@
                 const bText = b.children[columnIndex].textContent.trim();
 
                 // Check if numeric sort makes sense
-                const aNum = parseFloat(aText.replace(/[^0-9.-]+/g,""));
-                const bNum = parseFloat(bText.replace(/[^0-9.-]+/g,""));
-                const bothNumeric = !isNaN(aNum) && !isNaN(bNum);
-
-                if (bothNumeric) {
-                    return isAscending ? aNum - bNum : bNum - aNum;
-                } else {
-                    return isAscending
-                        ? aText.localeCompare(bText)
-                        : bText.localeCompare(aText);
-                }
+                return isAscending
+    				? aText.localeCompare(bText, undefined, { numeric: true })
+    				: bText.localeCompare(aText, undefined, { numeric: true });
             });
 
             // Rebuild table
