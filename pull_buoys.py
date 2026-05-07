@@ -29,7 +29,7 @@ final_df = buoy_df[['org_platform_id', 'platform_name',
                      'obs_dataset_id',
                      'deployment_site.latitude', 'deployment_site.longitude']].copy()
 final_df.columns = ['buoy', 'name', 'status', 'id', 'lat', 'lng']
-final_df["url"] = parse_df["id"].apply(
+final_df["url"] = final_df["id"].apply(
     lambda x: (
         f"https://seagull.glos.org/data-console/{int(x)}"
         if pd.notna(x)
