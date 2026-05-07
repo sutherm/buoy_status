@@ -8,7 +8,7 @@ from pathlib import Path
 def query_glos_api(endp):
     url = f"https://seagull-api.glos.org/api/v1/{endp}"
     response = requests.get(url)
-    
+
     if response.status_code == 200:
         # Parse the JSON payload
         response_data = response.json()
@@ -26,6 +26,14 @@ summary_df = query_glos_api("obs-dataset-summaries")
 buoy_df = summary_df[(summary_df['obs_dataset_platform_assignment.platform.platform_type'] == 'moored_buoy')]
 final_df = buoy_df[['org_platform_id', 'platform_name',
                      'obs_dataset_platform_assignment.platform.platform_event.collection_status',
-                     'deployment_site.latitude', 'deployment_site.longitude']]
-final_df.columns = ['buoy', 'name', 'status', 'lat', 'lng']
+                     'obs_dataset_id',
+                     'deployment_site.latitude', 'deployment_site.longitude']].copy()
+final_df.columns = ['buoy', 'name', 'status', 'id', 'lat', 'lng']
+final_df["url"] = parse_df["id"].apply(
+    lambda x: (
+        f"https://seagull.glos.org/data-console/{int(x)}"
+        if pd.notna(x)
+        else None
+    )
+)
 json_records = final_df.to_json("data/buoys.json", orient='records')
