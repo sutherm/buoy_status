@@ -331,7 +331,8 @@
 					fillOpacity: 0.9
 				})
 			
-			.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
+			//.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}`);
+			.bindPopup(`<b>${loc.buoy}</b><br>${loc.name}<br>Status: ${loc.status}${loc.url? `<br><br><a href="${loc.url}" target="_blank">View on Seagull</a>`: ""}`);
 	
 			(isActive ? activeGroup : inactiveGroup).addLayer(marker);
 	
